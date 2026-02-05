@@ -75,59 +75,6 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    // Fixed: SQL Injection vulnerability - Using PreparedStatement (secure parameterized query)
-    public List<User> searchUsersByName(String name) {
-        List<User> users = new java.util.ArrayList<>();
-        java.sql.Connection conn = null;
-        java.sql.PreparedStatement pstmt = null;
-        java.sql.ResultSet rs = null;
-        try {
-            // Use H2 database with strong password (required for security compliance)
-            // In production: use properties file or environment variables for credentials
-            String dbPassword = System.getProperty("h2.password", "H2TestDb#2026!Secure");
-            conn = java.sql.DriverManager.getConnection("jdbc:h2:mem:testdb", "sa", dbPassword);
-            // Use PreparedStatement to prevent SQL injection
-            String sql = "SELECT * FROM users WHERE name = ?";
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, name);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                User user = new User();
-                user.setId(rs.getLong("id"));
-                user.setName(rs.getString("name"));
-                user.setEmail(rs.getString("email"));
-                user.setPhone(rs.getString("phone"));
-                user.setAddress(rs.getString("address"));
-                users.add(user);
-            }
-        } catch (Exception e) {
-            // Log error appropriately - in production use proper logging framework
-            throw new RuntimeException("Failed to search users by name", e);
-        } finally {
-            try { if (rs != null) rs.close(); } catch (Exception ignored) { /* resource cleanup */ }
-            try { if (pstmt != null) pstmt.close(); } catch (Exception ignored) { /* resource cleanup */ }
-            try { if (conn != null) conn.close(); } catch (Exception ignored) { /* resource cleanup */ }
-        }
-        return users;
-    }
-
-    // Path Traversal vulnerability - demo only
-    public String readUserFile(String fileName) {
-        try {
-            String filePath = "/var/data/users/" + fileName;
-            java.io.File file = new java.io.File(filePath);
-            java.util.Scanner scanner = new java.util.Scanner(file);
-            StringBuilder content = new StringBuilder();
-            while (scanner.hasNextLine()) {
-                content.append(scanner.nextLine());
-            }
-            scanner.close();
-            return content.toString();
-        } catch (IOException e) {
-            throw new FileProcessingException("Failed to read user file: " + fileName, e);
-        }
-    }
-
     // Secure random number generation for password reset token
     public String generatePasswordResetToken() {
         byte[] randomBytes = new byte[32];
