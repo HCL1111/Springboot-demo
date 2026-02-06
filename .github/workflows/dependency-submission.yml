@@ -24,6 +24,7 @@ jobs:
       run: chmod +x gradlew
     
     - name: Generate and submit dependency graph
+      continue-on-error: true
       uses: mikepenz/gradle-dependency-submission@v1
       with:
         gradle-build-module: |-
