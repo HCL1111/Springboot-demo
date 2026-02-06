@@ -22,9 +22,27 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecureRandom secureRandom = new SecureRandom();
+    private final EntityManager entityManager;
+    
+    // VULNERABILITY: Hard-coded sensitive credentials
+    private static final String ADMIN_PASSWORD = "admin123";
+    private static final String API_KEY = "sk_test_51234567890abcdef";
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, EntityManager entityManager) {
         this.userRepository = userRepository;
+        this.entityManager = entityManager;
+    }
+    
+    // VULNERABILITY: SQL Injection - using raw SQL with string concatenation
+    public List<User> searchUsersByName(String name) {
+        String sql = "SELECT * FROM users WHERE name = '" + name + "'";
+        Query query = entityManager.createNativeQuery(sql, User.class);
+        return query.getResultList();
+    }
+    
+    // VULNERABILITY: Weak random number generation
+    public String generateWeakToken() {
+        return String.valueOf(Math.random() * 1000000);
     }
 
     // Fixed: Proper exception handling with logging
