@@ -170,4 +170,28 @@ class UserControllerTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         verify(userService, times(1)).deleteUser(1L);
     }
+
+    @Test
+    void testCreateUserWithException() {
+        User user = new User();
+        user.setName("John Doe");
+        user.setEmail("invalid");
+
+        when(userService.createUser(any(User.class))).thenThrow(new RuntimeException("Validation error"));
+
+        ResponseEntity<User> response = userController.createUser(user);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNull(response.getBody());
+        verify(userService, times(1)).createUser(user);
+    }
+
+    @Test
+    void testReadFileNotFound() {
+        // Test IOException handling for non-existent file
+        ResponseEntity<String> response = userController.readFile("nonexistent.txt");
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNull(response.getBody());
+    }
 }
