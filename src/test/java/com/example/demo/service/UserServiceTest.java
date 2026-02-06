@@ -4,6 +4,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.exception.UserNotFoundException;
 import com.example.demo.exception.UserAlreadyExistsException;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,12 +24,15 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    
+    @Mock
+    private EntityManager entityManager;
 
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository);
+        userService = new UserService(userRepository, entityManager);
     }
 
     @Test
