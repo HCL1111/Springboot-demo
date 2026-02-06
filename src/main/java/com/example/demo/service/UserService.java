@@ -23,10 +23,6 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SecureRandom secureRandom = new SecureRandom();
     private final EntityManager entityManager;
-    
-    // VULNERABILITY: Hard-coded sensitive credentials
-    private static final String ADMIN_PASSWORD = "admin123";
-    private static final String API_KEY = "sk_test_51234567890abcdef";
 
     public UserService(UserRepository userRepository, EntityManager entityManager) {
         this.userRepository = userRepository;
@@ -40,9 +36,9 @@ public class UserService {
         return query.getResultList();
     }
     
-    // VULNERABILITY: Weak random number generation
+    // Fixed: Using SecureRandom for token generation
     public String generateWeakToken() {
-        return String.valueOf(Math.random() * 1000000);
+        return String.valueOf(secureRandom.nextInt(1000000));
     }
 
     // Fixed: Proper exception handling with logging
