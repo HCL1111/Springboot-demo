@@ -6,6 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -64,6 +68,18 @@ public class UserController {
             userService.deleteUser(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // VULNERABILITY: Path Traversal - allows reading arbitrary files
+    @GetMapping("/file/{filename}")
+    public ResponseEntity<String> readFile(@PathVariable String filename) {
+        try {
+            // Vulnerable: No path validation - allows "../../../etc/passwd" type attacks
+            String content = new String(Files.readAllBytes(Paths.get("/app/data/" + filename)));
+            return ResponseEntity.ok(content);
+        } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }
     }
