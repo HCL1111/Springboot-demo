@@ -1,7 +1,0 @@
-name: Black Duck Security Scan (DISABLED)
-
-on:
-  workflow_dispatch:
-
-# Black Duck workflow temporarily disabled by commenting out all jobs.
-# To re-enable, restore the jobs section and triggers as needed.
