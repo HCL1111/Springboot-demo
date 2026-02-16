@@ -83,4 +83,12 @@ public class UserController {
         }
     }
 
+    // VULNERABILITY: SQL Injection - search users by name
+    @GetMapping("/search")
+    public ResponseEntity<List<User>> searchUsersByName(@RequestParam String name) {
+        // Vulnerable: Direct string concatenation in SQL query
+        List<User> users = userService.searchUsersByName(name);
+        return ResponseEntity.ok(users);
+    }
+
 }
