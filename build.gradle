@@ -52,8 +52,8 @@ dependencies {
     // Jackson Databind - Already updated by Dependabot
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     
-    // Spring Security for password hashing
-    implementation 'org.springframework.security:spring-security-crypto:6.4.4'
+    // Spring Security for password hashing - upgraded to 6.4.5 to fix CVE-2025-22234
+    implementation 'org.springframework.security:spring-security-crypto:6.4.5'
     
     // Lombok for reducing boilerplate code
     compileOnly 'org.projectlombok:lombok:1.18.36'
