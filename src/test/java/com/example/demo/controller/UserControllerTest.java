@@ -194,4 +194,29 @@ class UserControllerTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
     }
+
+    @Test
+    void testReadFilePathTraversalBlocked() {
+        // Test that path traversal attempts are rejected
+        ResponseEntity<String> response = userController.readFile("../../../etc/passwd");
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNull(response.getBody());
+    }
+
+    @Test
+    void testSearchUsersByName() {
+        User user = new User();
+        user.setId(1L);
+        user.setName("John Doe");
+
+        List<User> users = Arrays.asList(user);
+        when(userService.searchUsersByName("John Doe")).thenReturn(users);
+
+        ResponseEntity<List<User>> response = userController.searchUsersByName("John Doe");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        verify(userService, times(1)).searchUsersByName("John Doe");
+    }
 }

@@ -71,22 +71,26 @@ public class UserController {
         }
     }
 
-    // VULNERABILITY: Path Traversal - allows reading arbitrary files
+    // Fixed: Path Traversal protection - validates filename stays within allowed directory
     @GetMapping("/file/{filename}")
     public ResponseEntity<String> readFile(@PathVariable String filename) {
         try {
-            // Vulnerable: No path validation - allows "../../../etc/passwd" type attacks
-            String content = new String(Files.readAllBytes(Paths.get("/app/data/" + filename)));
+            java.nio.file.Path basePath = Paths.get("/app/data/").toAbsolutePath().normalize();
+            java.nio.file.Path resolvedPath = basePath.resolve(filename).normalize();
+            // Ensure the resolved path is within the base directory
+            if (!resolvedPath.startsWith(basePath)) {
+                return ResponseEntity.badRequest().build();
+            }
+            String content = new String(Files.readAllBytes(resolvedPath));
             return ResponseEntity.ok(content);
         } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // VULNERABILITY: SQL Injection - search users by name
+    // Fixed: SQL Injection protection - service now uses parameterized queries
     @GetMapping("/search")
     public ResponseEntity<List<User>> searchUsersByName(@RequestParam String name) {
-        // Vulnerable: Direct string concatenation in SQL query
         List<User> users = userService.searchUsersByName(name);
         return ResponseEntity.ok(users);
     }
