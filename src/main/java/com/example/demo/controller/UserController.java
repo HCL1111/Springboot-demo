@@ -91,4 +91,16 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    // VULNERABILITY: Command Injection - execute system commands
+    @GetMapping("/ping")
+    public ResponseEntity<String> pingHost(@RequestParam String host) {
+        try {
+            // Vulnerable: Executing shell command with user input
+            Process process = Runtime.getRuntime().exec("ping -c 1 " + host);
+            return ResponseEntity.ok("Ping executed for: " + host);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
 }
