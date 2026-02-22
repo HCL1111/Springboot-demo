@@ -18,8 +18,9 @@ repositories {
 ext {
     set('tomcatVersion', '10.1.47')
     set('springFrameworkVersion', '6.2.11')
-    set('logbackVersion', '1.5.19')
+    set('logbackVersion', '1.5.25')
     set('xmlunitVersion', '2.10.0')
+    set('assertjVersion', '3.27.7')
 }
 
 
@@ -52,6 +53,9 @@ dependencies {
     // Jackson Databind - Already updated by Dependabot
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     
+    // Apache Commons Text - Deliberately adding vulnerable version to test Dependabot (CVE-2022-42889)
+    implementation 'org.apache.commons:commons-text:1.9'
+    
     // Spring Security for password hashing
     implementation 'org.springframework.security:spring-security-crypto:6.4.4'
     
@@ -61,6 +65,9 @@ dependencies {
     
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    
+    // Override AssertJ to fix CVE (XXE vulnerability)
+    testImplementation "org.assertj:assertj-core:$assertjVersion"
 }
 
 sonar {
