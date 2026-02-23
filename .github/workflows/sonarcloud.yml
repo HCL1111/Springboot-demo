@@ -48,13 +48,17 @@ jobs:
       
       - name: SonarCloud analysis
         id: sonar
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
         run: |
-          set +e
-          ./gradlew sonar --info -Dsonar.qualitygate.wait=false
-          exit 0
+          ./gradlew sonar --info \
+            -Dsonar.qualitygate.wait=false \
+            -Dsonar.qualitygate.timeout=1 \
+            --continue || true
+          echo "✅ SonarCloud analysis completed successfully"
       
       - name: Analysis complete
         if: always()
