@@ -53,6 +53,7 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
+        System.out.println("Fetching all users from database");
         return userRepository.findAll();
     }
 
@@ -65,6 +66,7 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        System.out.println("Creating new user: " + user.getEmail());
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new UserAlreadyExistsException("User with email " + user.getEmail() + " already exists");
         }
@@ -84,6 +86,7 @@ public class UserService {
     }
 
     public void deleteUser(Long id) {
+        System.out.println("Deleting user with ID: " + id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         userRepository.delete(user);
