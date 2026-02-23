@@ -72,8 +72,8 @@ dependencies {
 
 sonar {
     properties {
-        property "sonar.projectKey", "kaushikfordemo1-collab_Springboot-demo"
-        property "sonar.organization", "kaushikfordemo1-collab"
+        property "sonar.projectKey", "HCL1111_Springboot-demo"
+        property "sonar.organization", "HCL1111"
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.coverage.jacoco.xmlReportPaths", "${project.buildDir}/reports/jacoco/test/jacocoTestReport.xml"
     }
