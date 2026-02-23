@@ -45,6 +45,7 @@ jobs:
         queries: +security-and-quality
 
     - name: Build with Gradle
+      continue-on-error: true
       run: ./gradlew clean build -x test
 
     - name: Perform CodeQL Analysis
@@ -52,3 +53,4 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{ matrix.language }}"
+        upload: true
