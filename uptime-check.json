@@ -1,0 +1,23 @@
+{
+  "displayName": "CloudRun-Chatbot-Uptime",
+  "monitoredResource": {
+    "type": "uptime_url",
+    "labels": {
+      "project_id": "project-f410cb7f-3020-43e6-8a9",
+      "host": "confluence-rag-chatbot-955224142245.australia-southeast2.run.app"
+    }
+  },
+  "httpCheck": {
+    "path": "/",
+    "port": 443,
+    "useSsl": true,
+    "validateSsl": true
+  },
+  "period": "60s",
+  "timeout": "10s",
+  "selectedRegions": [
+    "ASIA_PACIFIC",
+    "USA",
+    "EUROPE"
+  ]
+}

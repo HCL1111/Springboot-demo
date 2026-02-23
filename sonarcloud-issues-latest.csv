@@ -1,4 +1,0 @@
-"Rule","Severity","Type","Status","Message","File","Line","CreatedDate"
-"java:S1128","MINOR","CODE_SMELL","OPEN","Remove this unused import 'java.io.File'.","src/main/java/com/example/demo/controller/UserController.java","9","2/6/2026 6:52:03 PM"
-"java:S1068","MAJOR","CODE_SMELL","OPEN","Remove this unused ""ADMIN_PASSWORD"" private field.","src/main/java/com/example/demo/service/UserService.java","28","2/6/2026 12:13:16 PM"
-"java:S1068","MAJOR","CODE_SMELL","OPEN","Remove this unused ""API_KEY"" private field.","src/main/java/com/example/demo/service/UserService.java","29","2/6/2026 12:13:16 PM"

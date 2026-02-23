@@ -1,4 +1,0 @@
-"Alert_Number","Created","Description","File","Fixed","Line","Rule_ID","Severity","State"
-"3","1/16/2026 6:38:11 AM","Use of a potentially broken or risky cryptographic algorithm","src/main/java/com/example/demo/service/UserService.java","1/16/2026 6:45:20 AM","95","java/potentially-weak-cryptographic-algorithm","warning","fixed"
-"2","1/16/2026 6:25:39 AM","Query built by concatenation with a possibly-untrusted string","src/main/java/com/example/demo/service/UserService.java","1/16/2026 6:29:47 AM","66","java/concatenated-sql-query","error","fixed"
-"1","1/16/2026 4:12:06 AM","Workflow does not contain permissions",".github/workflows/build.yml","1/16/2026 4:34:51 AM","11","actions/missing-workflow-permissions","warning","fixed"

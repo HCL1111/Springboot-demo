@@ -1,2 +1,0 @@
-"Severity","Type","Message","Component","Line","Rule","Status","CreatedAt"
-"BLOCKER","VULNERABILITY","Add password protection to this database.","kaushikd123-hub_copilot-autofix-dependabot-demo:src/main/java/com/example/demo/service/UserService.java","89","java:S2115","OPEN",

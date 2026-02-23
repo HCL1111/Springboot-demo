@@ -1,6 +1,0 @@
-"Type","Category","Rule","Severity","Status","Message","File","Line"
-"Issue","CODE_SMELL","java:S1128","MINOR","OPEN","Remove this unused import 'java.io.File'.","src/main/java/com/example/demo/controller/UserController.java","9"
-"Issue","CODE_SMELL","java:S1068","MAJOR","OPEN","Remove this unused ""ADMIN_PASSWORD"" private field.","src/main/java/com/example/demo/service/UserService.java","28"
-"Issue","CODE_SMELL","java:S1068","MAJOR","OPEN","Remove this unused ""API_KEY"" private field.","src/main/java/com/example/demo/service/UserService.java","29"
-"SecurityHotspot","HIGH","java:S2068","HIGH","TO_REVIEW","'PASSWORD' detected in this expression, review this potentially hard-coded password.","src/main/java/com/example/demo/service/UserService.java","28"
-"SecurityHotspot","MEDIUM","java:S2245","MEDIUM","TO_REVIEW","Make sure that using this pseudorandom number generator is safe here.","src/main/java/com/example/demo/service/UserService.java","45"

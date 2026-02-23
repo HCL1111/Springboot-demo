@@ -1,3 +1,0 @@
-"severity","type","message","component","line","rule","createdDate"
-"MAJOR","CODE_SMELL","Remove this useless assignment to local variable ""value"".","kaushikd123-hub_copilot-autofix-dependabot-demo:src/main/java/com/example/demo/service/UserService.java","36","java:S1854",
-"MINOR","CODE_SMELL","Remove this unused ""value"" local variable.","kaushikd123-hub_copilot-autofix-dependabot-demo:src/main/java/com/example/demo/service/UserService.java","36","java:S1481",
