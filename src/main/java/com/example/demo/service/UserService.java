@@ -29,10 +29,11 @@ public class UserService {
         this.entityManager = entityManager;
     }
     
-    // VULNERABILITY: SQL Injection - using raw SQL with string concatenation
+    // Fixed: Using parameterized query to prevent SQL Injection
     public List<User> searchUsersByName(String name) {
-        String sql = "SELECT * FROM users WHERE name = '" + name + "'";
+        String sql = "SELECT * FROM users WHERE name = :name";
         Query query = entityManager.createNativeQuery(sql, User.class);
+        query.setParameter("name", name);
         return query.getResultList();
     }
     
