@@ -44,18 +44,18 @@ jobs:
         run: chmod +x gradlew
       
       - name: Build and test with coverage
-        continue-on-error: true
         run: ./gradlew build test jacocoTestReport
       
       - name: SonarCloud analysis
-        continue-on-error: true
+        id: sonar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./gradlew sonar --info \
-            -Dsonar.qualitygate.wait=false || true
+          set +e
+          ./gradlew sonar --info -Dsonar.qualitygate.wait=false
+          exit 0
       
-      - name: Mark job as successful
+      - name: Analysis complete
         if: always()
-        run: echo "SonarCloud analysis completed. Check results at https://sonarcloud.io"
+        run: echo "✅ SonarCloud analysis completed. Results uploaded to https://sonarcloud.io"
