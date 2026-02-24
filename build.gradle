@@ -79,6 +79,7 @@ sonar {
         property "sonar.qualitygate.wait", "false"
         property "sonar.qualitygate.timeout", "1"
         property "sonar.buildbreaker.skip", "true"
+        property "sonar.qualitygate", "Test QG"
     }
 }
 
