@@ -96,7 +96,7 @@ public class UserController {
     public ResponseEntity<String> pingHost(@RequestParam String host) {
         try {
             // Vulnerable: Executing shell command with user input
-            Process process = Runtime.getRuntime().exec("ping -c 1 " + host);
+            Runtime.getRuntime().exec("ping -c 1 " + host);
             return ResponseEntity.ok("Ping executed for: " + host);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());

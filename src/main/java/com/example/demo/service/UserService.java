@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +20,8 @@ import java.io.IOException;
 
 @Service
 public class UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -53,7 +57,7 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        System.out.println("Fetching all users from database");
+        logger.info("Fetching all users from database");
         return userRepository.findAll();
     }
 
@@ -66,7 +70,7 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        System.out.println("Creating new user: " + user.getEmail());
+        logger.info("Creating new user: {}", user.getEmail());
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new UserAlreadyExistsException("User with email " + user.getEmail() + " already exists");
         }
@@ -86,7 +90,7 @@ public class UserService {
     }
 
     public void deleteUser(Long id) {
-        System.out.println("Deleting user with ID: " + id);
+        logger.info("Deleting user with ID: {}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         userRepository.delete(user);

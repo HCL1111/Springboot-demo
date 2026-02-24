@@ -1,0 +1,262 @@
+{
+  "total": 5,
+  "p": 1,
+  "ps": 500,
+  "paging": {
+    "pageIndex": 1,
+    "pageSize": 500,
+    "total": 5
+  },
+  "effortTotal": 45,
+  "debtTotal": 45,
+  "issues": [
+    {
+      "key": "AZyIcO9fQxGUOUfttXxz",
+      "rule": "java:S106",
+      "severity": "MAJOR",
+      "component": "HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java",
+      "project": "HCL1111_Springboot-demo",
+      "line": 56,
+      "hash": "972c30593d52cca4433a3a8fcdcef713",
+      "textRange": {
+        "startLine": 56,
+        "endLine": 56,
+        "startOffset": 8,
+        "endOffset": 18
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Replace this use of System.out by a logger.",
+      "effort": "10min",
+      "debt": "10min",
+      "author": "kaushik.copilotuse@gmail.com",
+      "tags": [
+        "bad-practice",
+        "cert"
+      ],
+      "creationDate": "2026-02-23T14:00:16+11:00",
+      "updateDate": "2026-02-23T14:00:16+11:00",
+      "type": "CODE_SMELL",
+      "organization": "hcl1111",
+      "cleanCodeAttribute": "MODULAR",
+      "cleanCodeAttributeCategory": "ADAPTABLE",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "projectName": "Springboot-demo",
+      "internalTags": []
+    },
+    {
+      "key": "AZyIcO9fQxGUOUfttXx0",
+      "rule": "java:S106",
+      "severity": "MAJOR",
+      "component": "HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java",
+      "project": "HCL1111_Springboot-demo",
+      "line": 69,
+      "hash": "673d9f9c71c2d980ea18f72885886c55",
+      "textRange": {
+        "startLine": 69,
+        "endLine": 69,
+        "startOffset": 8,
+        "endOffset": 18
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Replace this use of System.out by a logger.",
+      "effort": "10min",
+      "debt": "10min",
+      "author": "kaushik.copilotuse@gmail.com",
+      "tags": [
+        "bad-practice",
+        "cert"
+      ],
+      "creationDate": "2026-02-23T14:00:16+11:00",
+      "updateDate": "2026-02-23T14:00:16+11:00",
+      "type": "CODE_SMELL",
+      "organization": "hcl1111",
+      "cleanCodeAttribute": "MODULAR",
+      "cleanCodeAttributeCategory": "ADAPTABLE",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "projectName": "Springboot-demo",
+      "internalTags": []
+    },
+    {
+      "key": "AZyIcO9fQxGUOUfttXx1",
+      "rule": "java:S106",
+      "severity": "MAJOR",
+      "component": "HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java",
+      "project": "HCL1111_Springboot-demo",
+      "line": 89,
+      "hash": "322057ca4211faaaf9e70e4d2b63e827",
+      "textRange": {
+        "startLine": 89,
+        "endLine": 89,
+        "startOffset": 8,
+        "endOffset": 18
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Replace this use of System.out by a logger.",
+      "effort": "10min",
+      "debt": "10min",
+      "author": "kaushik.copilotuse@gmail.com",
+      "tags": [
+        "bad-practice",
+        "cert"
+      ],
+      "creationDate": "2026-02-23T14:00:16+11:00",
+      "updateDate": "2026-02-23T14:00:16+11:00",
+      "type": "CODE_SMELL",
+      "organization": "hcl1111",
+      "cleanCodeAttribute": "MODULAR",
+      "cleanCodeAttributeCategory": "ADAPTABLE",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "projectName": "Springboot-demo",
+      "internalTags": []
+    },
+    {
+      "key": "AZyH83GbQxGUOUftpkM2",
+      "rule": "java:S1481",
+      "severity": "MINOR",
+      "component": "HCL1111_Springboot-demo:src/main/java/com/example/demo/controller/UserController.java",
+      "project": "HCL1111_Springboot-demo",
+      "line": 99,
+      "hash": "5f63f0316b2307ab972c8241cb90d63d",
+      "textRange": {
+        "startLine": 99,
+        "endLine": 99,
+        "startOffset": 20,
+        "endOffset": 27
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Remove this unused \"process\" local variable.",
+      "effort": "5min",
+      "debt": "5min",
+      "author": "kaushik.copilotuse@gmail.com",
+      "tags": [
+        "java22",
+        "unused"
+      ],
+      "creationDate": "2026-02-17T17:10:52+11:00",
+      "updateDate": "2026-02-23T11:43:15+11:00",
+      "type": "CODE_SMELL",
+      "organization": "hcl1111",
+      "cleanCodeAttribute": "CLEAR",
+      "cleanCodeAttributeCategory": "INTENTIONAL",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "LOW"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "projectName": "Springboot-demo",
+      "internalTags": []
+    },
+    {
+      "key": "AZyH83EYQxGUOUftpkM1",
+      "rule": "java:S106",
+      "severity": "MAJOR",
+      "component": "HCL1111_Springboot-demo:src/main/java/com/example/demo/DemoApplication.java",
+      "project": "HCL1111_Springboot-demo",
+      "line": 10,
+      "hash": "92d8b47dbab5b58068b7968cf1c99f2b",
+      "textRange": {
+        "startLine": 10,
+        "endLine": 10,
+        "startOffset": 8,
+        "endOffset": 18
+      },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Replace this use of System.out by a logger.",
+      "effort": "10min",
+      "debt": "10min",
+      "author": "kaushik.copilotuse@gmail.com",
+      "tags": [
+        "bad-practice",
+        "cert"
+      ],
+      "creationDate": "2026-02-17T10:34:34+11:00",
+      "updateDate": "2026-02-23T11:43:15+11:00",
+      "type": "CODE_SMELL",
+      "organization": "hcl1111",
+      "cleanCodeAttribute": "MODULAR",
+      "cleanCodeAttributeCategory": "ADAPTABLE",
+      "impacts": [
+        {
+          "softwareQuality": "MAINTAINABILITY",
+          "severity": "MEDIUM"
+        }
+      ],
+      "issueStatus": "OPEN",
+      "projectName": "Springboot-demo",
+      "internalTags": []
+    }
+  ],
+  "components": [
+    {
+      "organization": "hcl1111",
+      "key": "HCL1111_Springboot-demo",
+      "uuid": "AZyH8zAJ4WehCvfPMtfa",
+      "enabled": true,
+      "qualifier": "TRK",
+      "name": "Springboot-demo",
+      "longName": "Springboot-demo"
+    },
+    {
+      "organization": "hcl1111",
+      "key": "HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java",
+      "uuid": "AZyH82wSQxGUOUftpkMV",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "UserService.java",
+      "longName": "src/main/java/com/example/demo/service/UserService.java",
+      "path": "src/main/java/com/example/demo/service/UserService.java"
+    },
+    {
+      "organization": "hcl1111",
+      "key": "HCL1111_Springboot-demo:src/main/java/com/example/demo/controller/UserController.java",
+      "uuid": "AZyH82wSQxGUOUftpkMd",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "UserController.java",
+      "longName": "src/main/java/com/example/demo/controller/UserController.java",
+      "path": "src/main/java/com/example/demo/controller/UserController.java"
+    },
+    {
+      "organization": "hcl1111",
+      "key": "HCL1111_Springboot-demo:src/main/java/com/example/demo/DemoApplication.java",
+      "uuid": "AZyH82wSQxGUOUftpkMX",
+      "enabled": true,
+      "qualifier": "FIL",
+      "name": "DemoApplication.java",
+      "longName": "src/main/java/com/example/demo/DemoApplication.java",
+      "path": "src/main/java/com/example/demo/DemoApplication.java"
+    }
+  ],
+  "organizations": [
+    {
+      "key": "hcl1111",
+      "name": "HCL1111"
+    }
+  ],
+  "facets": []
+}

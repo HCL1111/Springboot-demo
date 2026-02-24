@@ -1,0 +1,44 @@
+SonarCloud Issues Report
+Generated: 02/24/2026 12:46:35
+Project: HCL1111_Springboot-demo
+Organization: HCL1111
+Total Issues: 5
+
+=== SUMMARY BY TYPE ===
+Bugs: 0
+Vulnerabilities: 0
+Code Smells: 5
+Security Hotspots: 0
+
+=== DETAILED ISSUES ===
+[CODE_SMELL] Remove this unused "process" local variable.
+  Severity: MINOR
+  File: HCL1111_Springboot-demo:src/main/java/com/example/demo/controller/UserController.java
+  Line: 99
+  Rule: java:S1481
+  Status: OPEN
+  [CODE_SMELL] Replace this use of System.out by a logger.
+  Severity: MAJOR
+  File: HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java
+  Line: 56
+  Rule: java:S106
+  Status: OPEN
+  [CODE_SMELL] Replace this use of System.out by a logger.
+  Severity: MAJOR
+  File: HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java
+  Line: 69
+  Rule: java:S106
+  Status: OPEN
+  [CODE_SMELL] Replace this use of System.out by a logger.
+  Severity: MAJOR
+  File: HCL1111_Springboot-demo:src/main/java/com/example/demo/service/UserService.java
+  Line: 89
+  Rule: java:S106
+  Status: OPEN
+  [CODE_SMELL] Replace this use of System.out by a logger.
+  Severity: MAJOR
+  File: HCL1111_Springboot-demo:src/main/java/com/example/demo/DemoApplication.java
+  Line: 10
+  Rule: java:S106
+  Status: OPEN
+  
