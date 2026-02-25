@@ -16,10 +16,9 @@ repositories {
 }
 
 ext {
-    set('tomcatVersion', '10.1.47')
-    set('springFrameworkVersion', '6.2.11')
-    set('logbackVersion', '1.5.25')
-    set('xmlunitVersion', '2.10.0')
+    set('tomcatVersion', '10.1.52')
+    set('logbackVersion', '1.5.32')
+    set('xmlunitVersion', '2.11.0')
     set('assertjVersion', '3.27.7')
 }
 
@@ -32,36 +31,32 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     
     // Override transitive dependencies with patched versions
-    implementation "org.springframework:spring-web:$springFrameworkVersion"
-    implementation "org.springframework:spring-webmvc:$springFrameworkVersion"
-    implementation "org.springframework:spring-context:$springFrameworkVersion"
-    implementation "org.springframework:spring-core:$springFrameworkVersion"
     implementation "org.apache.tomcat.embed:tomcat-embed-core:$tomcatVersion"
     implementation "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVersion"
     implementation "ch.qos.logback:logback-core:$logbackVersion"
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
-    implementation 'net.minidev:json-smart:2.5.2'
+    implementation 'net.minidev:json-smart:2.6.0'
     implementation "org.xmlunit:xmlunit-core:$xmlunitVersion"
     
     // H2 Database - Updated to latest version to fix CVEs
-    runtimeOnly 'com.h2database:h2:2.2.224'
+    runtimeOnly 'com.h2database:h2:2.4.240'
     
     // Log4j - Already updated by Dependabot
     implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
     implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
     
     // Jackson Databind - Already updated by Dependabot
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
     
     // Apache Commons Text - Updated to fix CVE-2022-42889 (Arbitrary code execution)
-    implementation 'org.apache.commons:commons-text:1.12.0'
+    implementation 'org.apache.commons:commons-text:1.15.0'
     
     // Spring Security for password hashing
-    implementation 'org.springframework.security:spring-security-crypto:6.4.4'
+    implementation 'org.springframework.security:spring-security-crypto:6.5.8'
     
     // Lombok for reducing boilerplate code
-    compileOnly 'org.projectlombok:lombok:1.18.36'
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
     
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
