@@ -1,0 +1,73 @@
+name: List Workflow Branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_name:
+        description: 'Workflow file name (e.g., cve-scanner.yml)'
+        required: false
+        default: 'cve-scanner.yml'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  list-branches:
+    name: List Branches with Workflows
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Fetch all branches
+        run: |
+          git fetch --all
+          echo "## All Remote Branches" >> $GITHUB_STEP_SUMMARY
+          git branch -r | grep -v HEAD >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check workflow file on branches
+        env:
+          WORKFLOW_FILE: ${{ inputs.workflow_name }}
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Branches containing workflow: $WORKFLOW_FILE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          for branch in $(git branch -r | grep -v HEAD | sed 's|origin/||'); do
+            if git ls-tree -r --name-only "origin/$branch" -- ".github/workflows/$WORKFLOW_FILE" 2>/dev/null | grep -q "$WORKFLOW_FILE"; then
+              echo "✅ \`$branch\`" >> $GITHUB_STEP_SUMMARY
+              
+              # Check if workflow_dispatch is present
+              if git show "origin/$branch:.github/workflows/$WORKFLOW_FILE" 2>/dev/null | grep -q "workflow_dispatch"; then
+                echo "   - Has workflow_dispatch: ✓" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "   - Has workflow_dispatch: ✗" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+      
+      - name: List all workflow files
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## All Workflow Files on Current Branch" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ls -la .github/workflows/ >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check specific copilot branches
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Copilot Branches Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          for branch in $(git branch -r | grep copilot | sed 's|origin/||'); do
+            echo "### Branch: \`$branch\`" >> $GITHUB_STEP_SUMMARY
+            
+            # List workflow files on this branch
+            echo "Workflow files:" >> $GITHUB_STEP_SUMMARY
+            git ls-tree -r --name-only "origin/$branch" -- ".github/workflows/" 2>/dev/null | sed 's|.github/workflows/|- |' >> $GITHUB_STEP_SUMMARY || echo "- None found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          done
