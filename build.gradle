@@ -16,8 +16,11 @@ repositories {
 }
 
 ext {
-    set('tomcatVersion', '10.1.52')
-    set('logbackVersion', '1.5.32')
+    // DELIBERATELY VULNERABLE VERSIONS FOR TESTING CVE SCANNER
+    // Tomcat 10.1.5 has CVE-2023-42795 (Request Smuggling)
+    set('tomcatVersion', '10.1.5')
+    // Logback 1.2.0 has CVE-2021-42550 (JNDI lookup vulnerability)
+    set('logbackVersion', '1.2.0')
     set('xmlunitVersion', '2.11.0')
     set('assertjVersion', '3.27.7')
 }
@@ -35,28 +38,29 @@ dependencies {
     implementation "org.apache.tomcat.embed:tomcat-embed-websocket:$tomcatVersion"
     implementation "ch.qos.logback:logback-core:$logbackVersion"
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
-    implementation 'net.minidev:json-smart:2.6.0'
+    // DELIBERATELY VULNERABLE: json-smart 2.4.7 has CVE-2023-1370 (Stack overflow DoS)
+    implementation 'net.minidev:json-smart:2.4.7'
     implementation "org.xmlunit:xmlunit-core:$xmlunitVersion"
     
-    // H2 Database - Updated to latest version to fix CVEs
-    runtimeOnly 'com.h2database:h2:2.4.240'
+    // DELIBERATELY VULNERABLE: H2 Database 2.1.210 has CVE-2022-45868 (Remote Code Execution)
+    runtimeOnly 'com.h2database:h2:2.1.210'
     
-    // Log4j - Already updated by Dependabot
-    implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
-    implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
+    // DELIBERATELY VULNERABLE: Log4j 2.14.1 has CVE-2021-44228 (Log4Shell - Remote Code Execution)
+    implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.14.1'
     
-    // Jackson Databind - Already updated by Dependabot
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
+    // DELIBERATELY VULNERABLE: Jackson 2.12.0 has CVE-2020-36518 (Denial of Service)
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.0'
     
-    // Apache Commons Text - Updated to fix CVE-2022-42889 (Arbitrary code execution)
-    implementation 'org.apache.commons:commons-text:1.15.0'
+    // DELIBERATELY VULNERABLE: Commons Text 1.9 has CVE-2022-42889 (Text4Shell - Arbitrary code execution)
+    implementation 'org.apache.commons:commons-text:1.9'
     
-    // Spring Security for password hashing
-    implementation 'org.springframework.security:spring-security-crypto:6.5.8'
+    // DELIBERATELY VULNERABLE: Spring Security 5.5.0 has CVE-2021-22112 (Authorization bypass)
+    implementation 'org.springframework.security:spring-security-crypto:5.5.0'
     
-    // Lombok for reducing boilerplate code
-    compileOnly 'org.projectlombok:lombok:1.18.42'
-    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    // DELIBERATELY VULNERABLE: Lombok 1.18.20 has CVE-2021-45046 related issues
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
     
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
