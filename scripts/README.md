@@ -73,10 +73,44 @@ The scanner will:
 - Run build and tests
 - Generate a report
 
+### `test_cve_scanner.py`
+
+Comprehensive test suite for the CVE scanner.
+
+**Features:**
+- Tests vulnerability detection capability
+- Verifies automatic fix application
+- Validates CVE report generation
+- Ensures build passes after fixes
+- Tests no-vulnerability scenario
+
+**Usage:**
+
+```bash
+# Run the test suite
+python scripts/test_cve_scanner.py
+```
+
+**Test Coverage:**
+1. ✅ Scanner can detect vulnerable dependencies
+2. ✅ Scanner can automatically fix vulnerabilities
+3. ✅ Scanner generates detailed CVE reports
+4. ✅ Fixed dependencies pass build and tests
+5. ✅ Scanner correctly handles no vulnerabilities case
+
+The test suite automatically:
+- Creates a backup of build.gradle
+- Introduces a known vulnerable dependency
+- Runs the scanner
+- Verifies the fix was applied
+- Runs the build to ensure it passes
+- Tests the no-vulnerability case
+- Restores the original state
+
 ## Requirements
 
 - Python 3.8+
 - `requests` library
 - Git
 - Gradle
-- GitHub CLI (for PR creation)
+- GitHub CLI (for PR creation, optional)
