@@ -58,7 +58,7 @@ dependencies {
     // DELIBERATELY VULNERABLE: Spring Security 5.5.0 has CVE-2021-22112 (Authorization bypass)
     implementation 'org.springframework.security:spring-security-crypto:5.5.0'
     
-    // DELIBERATELY VULNERABLE: Lombok 1.18.20 has CVE-2021-45046 related issues
+    // DELIBERATELY VULNERABLE: Lombok 1.18.20 (older version, general security best practice to use latest)
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
     

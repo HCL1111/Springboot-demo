@@ -10,14 +10,14 @@ This repository now contains **9 deliberate security vulnerabilities** in its de
 ### Option 1: Manual Workflow Trigger (Recommended)
 
 1. **Navigate to GitHub Actions**
-   - Go to the repository on GitHub: https://github.com/HCL1111/Springboot-demo
+   - Go to the repository on GitHub
    - Click on the "Actions" tab
    - Find the "CVE Scanner and Auto-Fix" workflow in the left sidebar
 
 2. **Trigger the Workflow**
    - Click on "CVE Scanner and Auto-Fix"
    - Click the "Run workflow" button (top right)
-   - Select the branch `copilot/add-dependency-vulnerability`
+   - Select the branch containing the vulnerabilities (the current branch with these changes)
    - Click the green "Run workflow" button
 
 3. **Monitor the Workflow**
