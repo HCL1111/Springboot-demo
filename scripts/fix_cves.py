@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 CVE Vulnerability Scanner and Fixer for Gradle Projects
 
@@ -18,6 +19,14 @@ import time
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 from datetime import datetime
+
+# Configure UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    import io
+    if sys.stdout.encoding != 'utf-8':
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    if sys.stderr.encoding != 'utf-8':
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # Try to import required packages, install if missing
 try:
@@ -42,6 +51,23 @@ class CVEScanner:
         self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.repo_owner = os.getenv("GITHUB_REPOSITORY", "").split("/")[0] if os.getenv("GITHUB_REPOSITORY") else ""
         self.repo_name = os.getenv("GITHUB_REPOSITORY", "").split("/")[1] if os.getenv("GITHUB_REPOSITORY") else ""
+        
+        # Detect platform and set appropriate gradle wrapper
+        self.is_windows = sys.platform.startswith('win')
+        self.gradle_wrapper = self._get_gradle_wrapper()
+    
+    def _get_gradle_wrapper(self) -> str:
+        """Get the appropriate gradle wrapper command for the current platform"""
+        if self.is_windows:
+            wrapper = self.project_root / "gradlew.bat"
+            if wrapper.exists():
+                return str(wrapper)
+            return "gradlew.bat"
+        else:
+            wrapper = self.project_root / "gradlew"
+            if wrapper.exists():
+                return "./gradlew"
+            return "./gradlew"
         
     def run(self):
         """Main execution flow"""
@@ -73,19 +99,24 @@ class CVEScanner:
             print(f"\nStep 3: Found {len(self.vulnerabilities)} vulnerabilities. Applying fixes...")
             self.fix_vulnerabilities()
             
-            # Step 4: Run Gradle build and tests
-            print("\nStep 4: Running Gradle build and tests...")
-            if not self.verify_build():
-                print("ERROR: Build or tests failed after applying fixes!")
-                return 1
-            
-            # Step 5: Generate summary report
-            print("\nStep 5: Generating summary report...")
-            self.generate_report()
-            
-            # Step 6: Create PR
-            print("\nStep 6: Creating Pull Request...")
-            self.create_pull_request()
+            # Step 4: Run Gradle build and tests (only if fixes were applied)
+            if self.fixes_applied:
+                print("\nStep 4: Running Gradle build and tests...")
+                if not self.verify_build():
+                    print("ERROR: Build or tests failed after applying fixes!")
+                    return 1
+                
+                # Step 5: Generate summary report
+                print("\nStep 5: Generating summary report...")
+                self.generate_report()
+                
+                # Step 6: Create PR
+                print("\nStep 6: Creating Pull Request...")
+                self.create_pull_request()
+            else:
+                print("\n⚠️  No fixes could be auto-applied.")
+                print("   The vulnerabilities may require manual intervention or no fix is available yet.")
+                return 0
         else:
             print("\n✅ No vulnerabilities found! All dependencies are secure.")
             return 0
@@ -233,15 +264,19 @@ class CVEScanner:
                     
                     # Only add if it's a current dependency OR if it's an open alert
                     if is_current or state == "open":
+                        # Handle None values by using 'or {}' to ensure we have a dict
+                        first_patched = vuln.get("first_patched_version") or {}
+                        cvss_data = advisory.get("cvss") or {}
+                        
                         self.vulnerabilities.append({
                             'package': package_name,
                             'ecosystem': package.get("ecosystem", "Unknown"),
                             'current_version': vuln.get("vulnerable_version_range", "Unknown"),
-                            'patched_version': vuln.get("first_patched_version", {}).get("identifier", "Unknown"),
+                            'patched_version': first_patched.get("identifier", "Unknown"),
                             'cve': advisory.get("cve_id", advisory.get("ghsa_id", "Unknown")),
                             'severity': advisory.get("severity", "Unknown"),
                             'description': advisory.get("description", ""),
-                            'cvss_score': advisory.get("cvss", {}).get("score", 0),
+                            'cvss_score': cvss_data.get("score", 0),
                             'alert_state': state
                         })
                 
@@ -479,7 +514,7 @@ class CVEScanner:
         """Parse dependencies from build.gradle"""
         dependencies = []
         
-        with open(self.build_gradle) as f:
+        with open(self.build_gradle, encoding='utf-8') as f:
             content = f.read()
         
         # First, extract version variables from ext block
@@ -544,7 +579,7 @@ class CVEScanner:
         print("Applying fixes to build.gradle...")
         
         # Read current build.gradle
-        with open(self.build_gradle) as f:
+        with open(self.build_gradle, encoding='utf-8') as f:
             content = f.read()
         
         original_content = content
@@ -575,7 +610,7 @@ class CVEScanner:
         
         # Write updated content if changes were made
         if content != original_content:
-            with open(self.build_gradle, 'w') as f:
+            with open(self.build_gradle, 'w', encoding='utf-8') as f:
                 f.write(content)
             print(f"\n✅ Applied {len(self.fixes_applied)} fixes to build.gradle")
         else:
@@ -597,7 +632,7 @@ class CVEScanner:
         # e.g., implementation 'com.h2database:h2:2.1.214'
         if group:
             pattern1 = rf"(['\"]){re.escape(group)}:{re.escape(artifact)}:[\d.]+(['\"])"
-            replacement1 = rf"\1{group}:{artifact}:{new_version}\2"
+            replacement1 = rf"\g<1>{group}:{artifact}:{new_version}\g<2>"
             new_content = re.sub(pattern1, replacement1, content)
             if new_content != content:
                 return new_content
@@ -606,7 +641,7 @@ class CVEScanner:
         # e.g., set('h2Version', '2.1.214')
         artifact_var = f"{artifact.replace('-', '')}Version"
         pattern2 = rf"set\(['\"]({artifact_var})['\"],\s*['\"][\d.]+['\"]\)"
-        replacement2 = rf"set('\1', '{new_version}')"
+        replacement2 = rf"set('\g<1>', '{new_version}')"
         new_content = re.sub(pattern2, replacement2, content)
         if new_content != content:
             return new_content
@@ -614,24 +649,58 @@ class CVEScanner:
         # Pattern 3: Direct variable assignment
         # e.g., tomcatVersion = '10.1.20'
         pattern3 = rf"({artifact_var}\s*=\s*['\"])[\d.]+(['\"])"
-        replacement3 = rf"\1{new_version}\2"
+        replacement3 = rf"\g<1>{new_version}\g<2>"
         new_content = re.sub(pattern3, replacement3, content)
         if new_content != content:
             return new_content
+        
+        # Pattern 4: For Spring Framework dependencies managed by BOM
+        # Add explicit version override in dependencies block
+        if group and 'springframework' in group:
+            # Check if dependency is already declared (without version)
+            existing_pattern = rf"implementation\s+['\"]({re.escape(group)}:{re.escape(artifact)})['\"]"
+            if re.search(existing_pattern, content):
+                # Add version override comment and explicit version declaration
+                # Find the dependencies block
+                deps_pattern = r"(dependencies\s*\{)"
+                comment = f"\n    // Override {artifact} version to fix security vulnerability"
+                override = f"\n    implementation '{group}:{artifact}:{new_version}'"
+                new_content = re.sub(deps_pattern, rf"\1{comment}{override}\n", content, count=1)
+                if new_content != content:
+                    return new_content
+        
+        # Pattern 5: For transitive dependencies - add explicit override
+        if group:
+            # Add to dependencies block
+            deps_pattern = r"(dependencies\s*\{)"
+            comment = f"\n    // Add explicit version to override transitive dependency and fix {artifact} vulnerability"
+            override = f"\n    implementation '{group}:{artifact}:{new_version}'"
+            new_content = re.sub(deps_pattern, rf"\1{comment}{override}\n", content, count=1)
+            if new_content != content:
+                return new_content
         
         return None
     
     def verify_build(self) -> bool:
         """Run Gradle build and tests to verify fixes"""
-        print("Running './gradlew clean build --no-daemon'...")
+        print(f"Running '{self.gradle_wrapper} clean build --no-daemon'...")
         
         try:
+            # Build command based on platform
+            if self.is_windows:
+                # On Windows, run the bat file directly
+                cmd = [self.gradle_wrapper, "clean", "build", "--no-daemon"]
+            else:
+                # On Linux/Mac, use shell to handle ./gradlew
+                cmd = [self.gradle_wrapper, "clean", "build", "--no-daemon"]
+            
             result = subprocess.run(
-                ["./gradlew", "clean", "build", "--no-daemon"],
+                cmd,
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=600
+                timeout=600,
+                shell=self.is_windows  # Use shell on Windows to handle .bat files
             )
             
             if result.returncode != 0:
@@ -662,7 +731,7 @@ class CVEScanner:
         report_file = self.project_root / "CVE_FIX_REPORT.md"
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')
         
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             f.write("# CVE Vulnerability Fix Report\n\n")
             f.write(f"**Generated:** {timestamp}\n\n")
             f.write("---\n\n")
@@ -706,7 +775,10 @@ class CVEScanner:
             f.write("## 🔧 Verification\n\n")
             f.write("All fixes have been verified with:\n")
             f.write("```bash\n")
-            f.write("./gradlew clean build --no-daemon\n")
+            if self.is_windows:
+                f.write("gradlew.bat clean build --no-daemon\n")
+            else:
+                f.write("./gradlew clean build --no-daemon\n")
             f.write("```\n\n")
             f.write("- ✅ Build completed successfully\n")
             f.write("- ✅ All tests passed\n\n")
@@ -793,7 +865,10 @@ class CVEScanner:
         body += "### Verification\n\n"
         body += "✅ All changes have been verified with:\n"
         body += "```bash\n"
-        body += "./gradlew clean build --no-daemon\n"
+        if self.is_windows:
+            body += "gradlew.bat clean build --no-daemon\n"
+        else:
+            body += "./gradlew clean build --no-daemon\n"
         body += "```\n\n"
         
         body += "📄 See `CVE_FIX_REPORT.md` for detailed information.\n\n"
