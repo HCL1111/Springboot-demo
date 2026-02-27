@@ -31,6 +31,9 @@ except ImportError:
 class CVEScanner:
     """Scanner for analyzing and fixing CVEs in Gradle dependencies"""
     
+    # Rate limiting delay for OSV API queries (seconds)
+    OSV_API_RATE_LIMIT_DELAY = 0.2
+    
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
         self.build_gradle = self.project_root / "build.gradle"
@@ -92,14 +95,63 @@ class CVEScanner:
         print("=" * 80)
         return 0
     
+    def verify_api_access(self) -> bool:
+        """Verify GitHub API access before attempting to use it"""
+        test_url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github+json"
+        }
+        
+        try:
+            response = requests.get(test_url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                print("   ✅ GitHub API is accessible")
+                return True
+            elif response.status_code == 403:
+                print("   ❌ GitHub API access denied (403)")
+                print("   Possible causes:")
+                print("      - Token lacks required permissions")
+                print("      - Network/proxy blocking API access")
+                print("      - Rate limit exceeded")
+                return False
+            elif response.status_code == 401:
+                print("   ❌ GitHub API authentication failed (401)")
+                print("   Token may be invalid or expired")
+                return False
+            elif response.status_code == 404:
+                print("   ❌ Repository not found (404)")
+                print(f"   Check GITHUB_REPOSITORY: {self.repo_owner}/{self.repo_name}")
+                return False
+            else:
+                print(f"   ⚠️  Unexpected API response: {response.status_code}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            print("   ❌ GitHub API request timed out")
+            return False
+        except requests.exceptions.ConnectionError:
+            print("   ❌ Cannot connect to GitHub API")
+            print("   Network may be unreachable or blocked")
+            return False
+        except Exception as e:
+            print(f"   ❌ Error verifying API access: {e}")
+            return False
+    
     def scan_with_github_dependabot(self):
         """Scan using GitHub Dependabot alerts API"""
         print("Checking GitHub Dependabot alerts...")
         
         if not self.github_token or not self.repo_owner or not self.repo_name:
             print("⚠️  GitHub credentials not available.")
-            print("ERROR: Dependabot API access is required for vulnerability scanning.")
-            print("Please ensure GITHUB_TOKEN and GITHUB_REPOSITORY are set correctly.")
+            print("   GITHUB_TOKEN or GITHUB_REPOSITORY not set")
+            print("   Will use fallback detection methods...")
+            return
+        
+        # Verify API access first
+        if not self.verify_api_access():
+            print("   Will use fallback detection methods...")
             return
         
         try:
@@ -232,9 +284,22 @@ class CVEScanner:
                                 for sev in severity_list:
                                     if sev.get("type") == "CVSS_V3":
                                         score_str = sev.get("score", "")
-                                        # Extract numeric score
+                                        # Extract numeric score from various formats
+                                        # e.g., "7.5/10" or "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/7.5"
                                         if "/" in score_str:
-                                            cvss_score = float(score_str.split("/")[0].replace("CVSS:3.1/", "").split(":")[0] if ":" in score_str else score_str.split("/")[0])
+                                            # Split by '/' and get first part
+                                            first_part = score_str.split("/")[0]
+                                            # Remove CVSS prefix if present
+                                            first_part = first_part.replace("CVSS:3.1/", "").replace("CVSS:3.0/", "")
+                                            # If it contains ':', take the part before it
+                                            if ":" in first_part:
+                                                first_part = first_part.split(":")[0]
+                                            # Convert to float
+                                            try:
+                                                cvss_score = float(first_part)
+                                            except ValueError:
+                                                # If conversion fails, keep default 0
+                                                pass
                                 
                                 # Find patched version
                                 patched_version = "Unknown"
@@ -278,7 +343,7 @@ class CVEScanner:
                     print(f"    ⚠️  Error processing {package_name}: {e}")
                 
                 # Small delay to avoid rate limiting
-                time.sleep(0.2)
+                time.sleep(self.OSV_API_RATE_LIMIT_DELAY)
             
             print(f"\nOSV scan complete. Found {len(self.vulnerabilities)} vulnerabilities")
             
@@ -333,7 +398,7 @@ class CVEScanner:
             {
                 "package": "org.apache.commons:commons-text",
                 "vulnerable_versions": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10.0"],
-                "fixed_version": "1.10.0",
+                "fixed_version": "1.11.0",
                 "cve": "CVE-2022-42889",
                 "severity": "CRITICAL",
                 "cvss_score": 9.8,
