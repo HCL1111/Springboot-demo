@@ -99,29 +99,64 @@ class CVEScanner:
             }
             
             url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/dependabot/alerts"
-            response = requests.get(url, headers=headers, params={"state": "open"})
             
-            if response.status_code == 200:
-                alerts = response.json()
-                print(f"Found {len(alerts)} open Dependabot alerts")
+            # First, try to get all alerts (not just open ones)
+            # This helps catch dismissed or auto-closed alerts that may still represent vulnerabilities
+            response_all = requests.get(url, headers=headers)
+            
+            if response_all.status_code == 200:
+                all_alerts = response_all.json()
+                print(f"Found {len(all_alerts)} total Dependabot alerts (all states)")
                 
-                for alert in alerts:
+                # Filter for alerts that represent current vulnerabilities
+                # Include: open, dismissed (might be false dismissal), auto_dismissed
+                # Exclude: fixed (truly resolved)
+                for alert in all_alerts:
+                    state = alert.get("state", "")
+                    
+                    # Skip truly fixed alerts
+                    if state == "fixed":
+                        continue
+                    
                     vuln = alert.get("security_vulnerability", {})
                     package = vuln.get("package", {})
                     advisory = alert.get("security_advisory", {})
                     
-                    self.vulnerabilities.append({
-                        'package': package.get("name", "Unknown"),
-                        'ecosystem': package.get("ecosystem", "Unknown"),
-                        'current_version': vuln.get("vulnerable_version_range", "Unknown"),
-                        'patched_version': vuln.get("first_patched_version", {}).get("identifier", "Unknown"),
-                        'cve': advisory.get("cve_id", advisory.get("ghsa_id", "Unknown")),
-                        'severity': advisory.get("severity", "Unknown"),
-                        'description': advisory.get("description", ""),
-                        'cvss_score': advisory.get("cvss", {}).get("score", 0)
-                    })
+                    # Check if the current dependency version is still vulnerable
+                    # by comparing against our actual dependencies
+                    dependencies = self.parse_gradle_dependencies()
+                    package_name = package.get("name", "Unknown")
+                    
+                    # Check if this package is in our current dependencies
+                    is_current = False
+                    for dep in dependencies:
+                        dep_name = f"{dep['group']}:{dep['artifact']}"
+                        if dep_name == package_name or dep['artifact'] == package_name.split(':')[-1]:
+                            is_current = True
+                            break
+                    
+                    # Only add if it's a current dependency OR if it's an open alert
+                    if is_current or state == "open":
+                        self.vulnerabilities.append({
+                            'package': package_name,
+                            'ecosystem': package.get("ecosystem", "Unknown"),
+                            'current_version': vuln.get("vulnerable_version_range", "Unknown"),
+                            'patched_version': vuln.get("first_patched_version", {}).get("identifier", "Unknown"),
+                            'cve': advisory.get("cve_id", advisory.get("ghsa_id", "Unknown")),
+                            'severity': advisory.get("severity", "Unknown"),
+                            'description': advisory.get("description", ""),
+                            'cvss_score': advisory.get("cvss", {}).get("score", 0),
+                            'alert_state': state
+                        })
+                
+                print(f"Identified {len(self.vulnerabilities)} vulnerabilities affecting current dependencies")
+                
+                # If no vulnerabilities found via Dependabot, also run manual check
+                if len(self.vulnerabilities) == 0:
+                    print("No Dependabot vulnerabilities found, running manual check...")
+                    self.manual_cve_check()
             else:
-                print(f"⚠️  Could not fetch Dependabot alerts (status {response.status_code})")
+                print(f"⚠️  Could not fetch Dependabot alerts (status {response_all.status_code})")
                 print("Falling back to manual scanning...")
                 self.manual_cve_check()
                 
@@ -208,12 +243,31 @@ class CVEScanner:
         with open(self.build_gradle) as f:
             content = f.read()
         
+        # First, extract version variables from ext block
+        version_vars = {}
+        # Pattern 1: set('varName', 'version')
+        ext_pattern1 = r"set\(['\"](\w+)['\"],\s*['\"](.+?)['\"]\)"
+        for var_name, var_value in re.findall(ext_pattern1, content):
+            version_vars[var_name] = var_value
+        
+        # Pattern 2: varName = 'version' (in ext block or elsewhere)
+        ext_pattern2 = r"(\w+Version)\s*=\s*['\"](.+?)['\"]"
+        for var_name, var_value in re.findall(ext_pattern2, content):
+            version_vars[var_name] = var_value
+        
         # Extract dependency declarations
         dep_pattern = r"(implementation|testImplementation|runtimeOnly|compileOnly)\s+['\"](.+?):(.+?):(.+?)['\"]"
         matches = re.findall(dep_pattern, content)
         
         for match in matches:
             scope, group, artifact, version = match
+            
+            # Resolve version variables (e.g., $tomcatVersion or ${tomcatVersion})
+            if version.startswith('$'):
+                # Remove $ and optional {} brackets
+                var_name = version.lstrip('$').strip('{}')
+                version = version_vars.get(var_name, version)
+            
             dependencies.append({
                 'scope': scope,
                 'group': group,
