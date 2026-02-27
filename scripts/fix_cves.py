@@ -170,8 +170,6 @@ class CVEScanner:
             print(f"⚠️  Error fetching Dependabot alerts: {e}")
             print("ERROR: Cannot scan for vulnerabilities without Dependabot API access")
     
-
-    
     def parse_gradle_dependencies(self) -> List[Dict]:
         """Parse dependencies from build.gradle"""
         dependencies = []

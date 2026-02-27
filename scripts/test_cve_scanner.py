@@ -14,6 +14,7 @@ import sys
 import shutil
 from pathlib import Path
 import tempfile
+import re
 
 
 class CVEScannerTester:
@@ -62,7 +63,6 @@ class CVEScannerTester:
         
         # Replace H2 with a vulnerable version
         # Find the current H2 version
-        import re
         h2_pattern = r"runtimeOnly 'com\.h2database:h2:([\d.]+)'"
         match = re.search(h2_pattern, content)
         
