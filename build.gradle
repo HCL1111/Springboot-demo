@@ -24,6 +24,15 @@ ext {
 
 
 dependencies {
+    // Add explicit version to override transitive dependency and fix commons-lang3 vulnerability
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+
+    // Add explicit version to override transitive dependency and fix spring-context vulnerability
+    implementation 'org.springframework:spring-context:6.1.20'
+
+    // Add explicit version to override transitive dependency and fix spring-web vulnerability
+    implementation 'org.springframework:spring-web:6.1.21'
+
     // Spring Boot Starter Web
     implementation 'org.springframework.boot:spring-boot-starter-web'
     
