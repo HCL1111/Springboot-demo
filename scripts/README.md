@@ -6,7 +6,23 @@ This directory contains automation scripts for security vulnerability management
 
 **First time setup?** See **[HOW_TO_TEST_TOKEN.md](../HOW_TO_TEST_TOKEN.md)** for complete guide!
 
-**Getting 403 errors?** Start here:
+**Testing your token?**
+
+```bash
+# Test Dependabot API access (dedicated test)
+python scripts/test_dependabot_api.py
+
+# Comprehensive validation
+python scripts/setup_token.py
+
+# Flow simulation (safe, no changes)
+python scripts/test_token_flow.py
+
+# Run the actual scanner
+python scripts/fix_cves.py
+```
+
+**Getting 403 errors?**
 
 ```bash
 # 1. Validate your GitHub token setup
@@ -18,20 +34,8 @@ python scripts/setup_token.py
 python scripts/fix_cves.py
 ```
 
-**Testing your token?**
-
-```bash
-# Simulate the flow (safe, no changes)
-python scripts/test_token_flow.py
-
-# Validate token permissions
-python scripts/setup_token.py
-
-# Run the actual scanner
-python scripts/fix_cves.py
-```
-
 ### Documentation
+- **[DEPENDABOT_API_TEST_RESULTS.md](../DEPENDABOT_API_TEST_RESULTS.md)** - API test results and guide
 - **[HOW_TO_TEST_TOKEN.md](../HOW_TO_TEST_TOKEN.md)** - Testing guide for your token
 - **[TEST_YOUR_TOKEN.md](../TEST_YOUR_TOKEN.md)** - Security guide and setup
 - **[QUICK_FIX_403.md](../QUICK_FIX_403.md)** - Quick reference for 403 errors
@@ -63,7 +67,7 @@ python scripts/setup_token.py
 - When setting up the scanner for the first time on your personal laptop
 - To troubleshoot token permission issues
 
-### `test_token_flow.py` ⭐ NEW
+### `test_token_flow.py`
 
 **Safe flow simulator that shows what will happen without making changes.**
 
@@ -87,6 +91,42 @@ python scripts/test_token_flow.py
 - To understand the complete flow
 - To verify your environment is configured
 - When testing a new token
+
+### `test_dependabot_api.py` ⭐ NEW
+
+**Dedicated test script for Dependabot API access.**
+
+Tests if your GitHub token can successfully access the Dependabot alerts API with detailed diagnostics.
+
+**Usage:**
+
+```bash
+export GITHUB_TOKEN='your_token_here'
+export GITHUB_REPOSITORY='owner/repo'
+python scripts/test_dependabot_api.py
+```
+
+**What it does:**
+- ✅ Tests token validity and scopes
+- ✅ Verifies repository access
+- ✅ Checks Dependabot enablement
+- ✅ **Tests Dependabot API access** (main test)
+- ✅ Shows detailed alert information
+- ✅ Provides specific error diagnostics
+
+**When to use:**
+- To test if a token works with Dependabot API
+- To diagnose 403 permission errors
+- To verify token has 'security_events' scope
+- After creating a new token
+
+**Expected output on success:**
+```
+✅ SUCCESS - Dependabot API is accessible!
+✅ Found X Dependabot alert(s)
+```
+
+See `DEPENDABOT_API_TEST_RESULTS.md` for example test results.
 
 ### `fix_cves.py`
 
