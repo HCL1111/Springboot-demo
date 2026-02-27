@@ -4,6 +4,8 @@ This directory contains automation scripts for security vulnerability management
 
 ## Quick Start for Personal Use
 
+**First time setup?** See **[HOW_TO_TEST_TOKEN.md](../HOW_TO_TEST_TOKEN.md)** for complete guide!
+
 **Getting 403 errors?** Start here:
 
 ```bash
@@ -16,7 +18,24 @@ python scripts/setup_token.py
 python scripts/fix_cves.py
 ```
 
-See **[FIXING_403_FOR_PERSONAL_USE.md](../FIXING_403_FOR_PERSONAL_USE.md)** for complete setup guide.
+**Testing your token?**
+
+```bash
+# Simulate the flow (safe, no changes)
+python scripts/test_token_flow.py
+
+# Validate token permissions
+python scripts/setup_token.py
+
+# Run the actual scanner
+python scripts/fix_cves.py
+```
+
+### Documentation
+- **[HOW_TO_TEST_TOKEN.md](../HOW_TO_TEST_TOKEN.md)** - Testing guide for your token
+- **[TEST_YOUR_TOKEN.md](../TEST_YOUR_TOKEN.md)** - Security guide and setup
+- **[QUICK_FIX_403.md](../QUICK_FIX_403.md)** - Quick reference for 403 errors
+- **[FIXING_403_FOR_PERSONAL_USE.md](../FIXING_403_FOR_PERSONAL_USE.md)** - Detailed troubleshooting
 
 ## Files
 
@@ -43,6 +62,31 @@ python scripts/setup_token.py
 - When you get 403 Forbidden errors
 - When setting up the scanner for the first time on your personal laptop
 - To troubleshoot token permission issues
+
+### `test_token_flow.py` ⭐ NEW
+
+**Safe flow simulator that shows what will happen without making changes.**
+
+This script simulates the CVE scanner flow to help you understand what will happen when you run it on your local machine.
+
+**Usage:**
+
+```bash
+python scripts/test_token_flow.py
+```
+
+**What it does:**
+- ✅ Checks environment variables are set
+- ✅ Explains each step of the CVE scanner
+- ✅ Shows expected output
+- ✅ Provides security warnings
+- ✅ **Does NOT make any actual changes**
+
+**When to use:**
+- Before running the actual CVE scanner for the first time
+- To understand the complete flow
+- To verify your environment is configured
+- When testing a new token
 
 ### `fix_cves.py`
 
