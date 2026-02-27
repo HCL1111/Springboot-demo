@@ -111,18 +111,38 @@ class CVEScanner:
                 return True
             elif response.status_code == 403:
                 print("   ❌ GitHub API access denied (403)")
+                
+                # Try to get more details from response
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', '')
+                    
+                    # Check for specific permission issues
+                    if 'security_events' in error_msg.lower() or 'security events' in error_msg.lower():
+                        print("   ❗ Token missing 'security_events' permission")
+                        print("   You need to create a new token with this scope")
+                    elif 'rate limit' in error_msg.lower():
+                        print("   ❗ Rate limit exceeded")
+                        print(f"   Details: {error_msg}")
+                    else:
+                        print(f"   Error: {error_msg}")
+                except:
+                    pass
+                
                 print("   Possible causes:")
-                print("      - Token lacks required permissions")
+                print("      - Token lacks 'security_events' permission (most common)")
                 print("      - Network/proxy blocking API access")
                 print("      - Rate limit exceeded")
                 return False
             elif response.status_code == 401:
                 print("   ❌ GitHub API authentication failed (401)")
                 print("   Token may be invalid or expired")
+                print("   Create a new token at: https://github.com/settings/tokens")
                 return False
             elif response.status_code == 404:
                 print("   ❌ Repository not found (404)")
                 print(f"   Check GITHUB_REPOSITORY: {self.repo_owner}/{self.repo_name}")
+                print("   Ensure token has access to this repository")
                 return False
             else:
                 print(f"   ⚠️  Unexpected API response: {response.status_code}")
@@ -146,11 +166,22 @@ class CVEScanner:
         if not self.github_token or not self.repo_owner or not self.repo_name:
             print("⚠️  GitHub credentials not available.")
             print("   GITHUB_TOKEN or GITHUB_REPOSITORY not set")
+            print()
+            print("   💡 For personal use:")
+            print("      1. Run: python scripts/setup_token.py")
+            print("      2. Follow the guide to create a token with 'security_events' scope")
+            print("      3. Set environment variables and try again")
+            print()
             print("   Will use fallback detection methods...")
             return
         
         # Verify API access first
         if not self.verify_api_access():
+            print()
+            print("   💡 If you're using a personal GitHub account:")
+            print("      Run: python scripts/setup_token.py")
+            print("      This will validate your token and guide you through setup")
+            print()
             print("   Will use fallback detection methods...")
             return
         

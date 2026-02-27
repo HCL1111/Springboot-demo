@@ -2,7 +2,47 @@
 
 This directory contains automation scripts for security vulnerability management.
 
+## Quick Start for Personal Use
+
+**Getting 403 errors?** Start here:
+
+```bash
+# 1. Validate your GitHub token setup
+python scripts/setup_token.py
+
+# 2. Follow the interactive guide to fix any issues
+
+# 3. Once validation passes, run the CVE scanner
+python scripts/fix_cves.py
+```
+
+See **[FIXING_403_FOR_PERSONAL_USE.md](../FIXING_403_FOR_PERSONAL_USE.md)** for complete setup guide.
+
 ## Files
+
+### `setup_token.py` ⭐ NEW
+
+**Interactive token validator and setup guide for personal GitHub accounts.**
+
+This tool helps you configure your GitHub Personal Access Token with the correct permissions to avoid 403 errors.
+
+**Usage:**
+
+```bash
+python scripts/setup_token.py
+```
+
+**What it does:**
+- ✅ Validates your GitHub token
+- ✅ Checks for required `security_events` permission
+- ✅ Verifies repository access
+- ✅ Tests Dependabot API connectivity
+- ✅ Provides step-by-step setup guidance if issues are found
+
+**When to use:**
+- When you get 403 Forbidden errors
+- When setting up the scanner for the first time on your personal laptop
+- To troubleshoot token permission issues
 
 ### `fix_cves.py`
 
