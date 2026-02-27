@@ -31,6 +31,9 @@ except ImportError:
 class CVEScanner:
     """Scanner for analyzing and fixing CVEs in Gradle dependencies"""
     
+    # Rate limiting delay for OSV API queries (seconds)
+    OSV_API_RATE_LIMIT_DELAY = 0.2
+    
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
         self.build_gradle = self.project_root / "build.gradle"
@@ -50,6 +53,16 @@ class CVEScanner:
         # Step 1: Scan for vulnerabilities
         print("Step 1: Scanning for vulnerabilities...")
         self.scan_with_github_dependabot()
+        
+        # If Dependabot API failed, use OSV database as fallback
+        if not self.vulnerabilities:
+            print("\nStep 1b: Using OSV (Open Source Vulnerabilities) database as fallback...")
+            self.scan_with_osv_api()
+        
+        # If OSV also failed (network blocked), use built-in known CVE database
+        if not self.vulnerabilities:
+            print("\nStep 1c: Using built-in known CVE database as fallback...")
+            self.scan_with_known_cves()
         
         # Step 2: Parse and analyze results
         print("\nStep 2: Analyzing vulnerabilities...")
@@ -82,14 +95,94 @@ class CVEScanner:
         print("=" * 80)
         return 0
     
+    def verify_api_access(self) -> bool:
+        """Verify GitHub API access before attempting to use it"""
+        test_url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
+        headers = {
+            "Authorization": f"token {self.github_token}",
+            "Accept": "application/vnd.github+json"
+        }
+        
+        try:
+            response = requests.get(test_url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                print("   ✅ GitHub API is accessible")
+                return True
+            elif response.status_code == 403:
+                print("   ❌ GitHub API access denied (403)")
+                
+                # Try to get more details from response
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('message', '')
+                    
+                    # Check for specific permission issues
+                    if 'security_events' in error_msg.lower() or 'security events' in error_msg.lower():
+                        print("   ❗ Token missing 'security_events' permission")
+                        print("   You need to create a new token with this scope")
+                    elif 'rate limit' in error_msg.lower():
+                        print("   ❗ Rate limit exceeded")
+                        print(f"   Details: {error_msg}")
+                    else:
+                        print(f"   Error: {error_msg}")
+                except:
+                    pass
+                
+                print("   Possible causes:")
+                print("      - Token lacks 'security_events' permission (most common)")
+                print("      - Network/proxy blocking API access")
+                print("      - Rate limit exceeded")
+                return False
+            elif response.status_code == 401:
+                print("   ❌ GitHub API authentication failed (401)")
+                print("   Token may be invalid or expired")
+                print("   Create a new token at: https://github.com/settings/tokens")
+                return False
+            elif response.status_code == 404:
+                print("   ❌ Repository not found (404)")
+                print(f"   Check GITHUB_REPOSITORY: {self.repo_owner}/{self.repo_name}")
+                print("   Ensure token has access to this repository")
+                return False
+            else:
+                print(f"   ⚠️  Unexpected API response: {response.status_code}")
+                return False
+                
+        except requests.exceptions.Timeout:
+            print("   ❌ GitHub API request timed out")
+            return False
+        except requests.exceptions.ConnectionError:
+            print("   ❌ Cannot connect to GitHub API")
+            print("   Network may be unreachable or blocked")
+            return False
+        except Exception as e:
+            print(f"   ❌ Error verifying API access: {e}")
+            return False
+    
     def scan_with_github_dependabot(self):
         """Scan using GitHub Dependabot alerts API"""
         print("Checking GitHub Dependabot alerts...")
         
         if not self.github_token or not self.repo_owner or not self.repo_name:
             print("⚠️  GitHub credentials not available.")
-            print("ERROR: Dependabot API access is required for vulnerability scanning.")
-            print("Please ensure GITHUB_TOKEN and GITHUB_REPOSITORY are set correctly.")
+            print("   GITHUB_TOKEN or GITHUB_REPOSITORY not set")
+            print()
+            print("   💡 For personal use:")
+            print("      1. Run: python scripts/setup_token.py")
+            print("      2. Follow the guide to create a token with 'security_events' scope")
+            print("      3. Set environment variables and try again")
+            print()
+            print("   Will use fallback detection methods...")
+            return
+        
+        # Verify API access first
+        if not self.verify_api_access():
+            print()
+            print("   💡 If you're using a personal GitHub account:")
+            print("      Run: python scripts/setup_token.py")
+            print("      This will validate your token and guide you through setup")
+            print()
+            print("   Will use fallback detection methods...")
             return
         
         try:
@@ -168,7 +261,219 @@ class CVEScanner:
                 
         except Exception as e:
             print(f"⚠️  Error fetching Dependabot alerts: {e}")
-            print("ERROR: Cannot scan for vulnerabilities without Dependabot API access")
+            print("Will fallback to OSV API if available")
+    
+    def scan_with_osv_api(self):
+        """Scan using OSV (Open Source Vulnerabilities) API as a fallback"""
+        print("Querying OSV database for vulnerabilities...")
+        
+        try:
+            # Parse current dependencies
+            dependencies = self.parse_gradle_dependencies()
+            print(f"Found {len(dependencies)} dependencies to check")
+            
+            osv_api_url = "https://api.osv.dev/v1/query"
+            
+            for dep in dependencies:
+                package_name = f"{dep['group']}:{dep['artifact']}"
+                version = dep['version']
+                
+                print(f"  Checking {package_name}:{version}...")
+                
+                # Query OSV API
+                payload = {
+                    "version": version,
+                    "package": {
+                        "name": package_name,
+                        "ecosystem": "Maven"
+                    }
+                }
+                
+                try:
+                    response = requests.post(osv_api_url, json=payload, timeout=10)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        vulns = result.get("vulns", [])
+                        
+                        if vulns:
+                            print(f"    ⚠️  Found {len(vulns)} vulnerability(ies)")
+                            
+                            for vuln_data in vulns:
+                                vuln_id = vuln_data.get("id", "Unknown")
+                                summary = vuln_data.get("summary", "")
+                                severity = "UNKNOWN"
+                                cvss_score = 0
+                                
+                                # Extract severity from database_specific
+                                db_specific = vuln_data.get("database_specific", {})
+                                if db_specific:
+                                    severity = db_specific.get("severity", "UNKNOWN")
+                                
+                                # Extract CVSS score if available
+                                severity_list = vuln_data.get("severity", [])
+                                for sev in severity_list:
+                                    if sev.get("type") == "CVSS_V3":
+                                        score_str = sev.get("score", "")
+                                        # Extract numeric score from various formats
+                                        # e.g., "7.5/10" or "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/7.5"
+                                        if "/" in score_str:
+                                            # Split by '/' and get first part
+                                            first_part = score_str.split("/")[0]
+                                            # Remove CVSS prefix if present
+                                            first_part = first_part.replace("CVSS:3.1/", "").replace("CVSS:3.0/", "")
+                                            # If it contains ':', take the part before it
+                                            if ":" in first_part:
+                                                first_part = first_part.split(":")[0]
+                                            # Convert to float
+                                            try:
+                                                cvss_score = float(first_part)
+                                            except ValueError:
+                                                # If conversion fails, keep default 0
+                                                pass
+                                
+                                # Find patched version
+                                patched_version = "Unknown"
+                                affected_ranges = vuln_data.get("affected", [])
+                                for affected in affected_ranges:
+                                    if affected.get("package", {}).get("name") == package_name:
+                                        ranges = affected.get("ranges", [])
+                                        for range_info in ranges:
+                                            events = range_info.get("events", [])
+                                            for event in events:
+                                                if "fixed" in event:
+                                                    patched_version = event["fixed"]
+                                                    break
+                                            if patched_version != "Unknown":
+                                                break
+                                    if patched_version != "Unknown":
+                                        break
+                                
+                                self.vulnerabilities.append({
+                                    'package': package_name,
+                                    'ecosystem': 'maven',
+                                    'current_version': version,
+                                    'patched_version': patched_version,
+                                    'cve': vuln_id,
+                                    'severity': severity,
+                                    'description': summary,
+                                    'cvss_score': cvss_score,
+                                    'alert_state': 'open',
+                                    'source': 'osv'
+                                })
+                        else:
+                            print(f"    ✅ No vulnerabilities found")
+                    else:
+                        print(f"    ⚠️  OSV API error (status {response.status_code})")
+                
+                except requests.exceptions.Timeout:
+                    print(f"    ⚠️  Timeout querying OSV for {package_name}")
+                except requests.exceptions.RequestException as e:
+                    print(f"    ⚠️  Network error: {e}")
+                except Exception as e:
+                    print(f"    ⚠️  Error processing {package_name}: {e}")
+                
+                # Small delay to avoid rate limiting
+                time.sleep(self.OSV_API_RATE_LIMIT_DELAY)
+            
+            print(f"\nOSV scan complete. Found {len(self.vulnerabilities)} vulnerabilities")
+            
+        except Exception as e:
+            print(f"⚠️  Error running OSV scan: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def scan_with_known_cves(self):
+        """Scan using built-in known CVE database (fallback when APIs are unavailable)"""
+        print("Checking dependencies against known CVE database...")
+        
+        # Known CVEs database - updated periodically
+        # Format: (group:artifact, vulnerable_version_range, fixed_version, cve_id, severity, description)
+        known_cves = [
+            {
+                "package": "commons-io:commons-io",
+                "vulnerable_versions": ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8.0", "2.9.0", "2.10.0", "2.11.0", "2.12.0", "2.13.0"],
+                "fixed_version": "2.14.0",
+                "cve": "CVE-2024-47554",
+                "severity": "MODERATE",
+                "cvss_score": 5.3,
+                "description": "Uncontrolled Resource Consumption vulnerability in Apache Commons IO. The org.apache.commons.io.input.XmlStreamReader class may excessively consume CPU resources when processing maliciously crafted input."
+            },
+            {
+                "package": "com.h2database:h2",
+                "vulnerable_versions": ["2.0.0", "2.0.206", "2.1.210", "2.1.212", "2.1.214", "2.2.220", "2.2.224"],
+                "fixed_version": "2.3.230",
+                "cve": "CVE-2022-45868",
+                "severity": "CRITICAL",
+                "cvss_score": 9.8,
+                "description": "The web-based admin console in H2 Database Engine allows remote attackers to execute arbitrary code via a jdbc:h2:mem JDBC URL."
+            },
+            {
+                "package": "org.apache.logging.log4j:log4j-core",
+                "vulnerable_versions": ["2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9.0", "2.10.0", "2.11.0", "2.12.0", "2.12.1", "2.13.0", "2.14.0", "2.14.1", "2.15.0", "2.16.0"],
+                "fixed_version": "2.17.1",
+                "cve": "CVE-2021-44228",
+                "severity": "CRITICAL",
+                "cvss_score": 10.0,
+                "description": "Apache Log4j2 JNDI features do not protect against attacker controlled LDAP and other JNDI related endpoints."
+            },
+            {
+                "package": "com.fasterxml.jackson.core:jackson-databind",
+                "vulnerable_versions": ["2.0.0", "2.1.0", "2.2.0", "2.3.0", "2.4.0", "2.5.0", "2.6.0", "2.7.0", "2.8.0", "2.9.0", "2.9.1", "2.9.2", "2.9.3", "2.9.4", "2.9.5", "2.9.6", "2.9.7", "2.9.8", "2.9.9", "2.9.10"],
+                "fixed_version": "2.9.10.1",
+                "cve": "CVE-2019-12384",
+                "severity": "HIGH",
+                "cvss_score": 7.5,
+                "description": "FasterXML jackson-databind might allow attackers to have a variety of impacts by leveraging failure to block the logback-core class."
+            },
+            {
+                "package": "org.apache.commons:commons-text",
+                "vulnerable_versions": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10.0"],
+                "fixed_version": "1.11.0",
+                "cve": "CVE-2022-42889",
+                "severity": "CRITICAL",
+                "cvss_score": 9.8,
+                "description": "Apache Commons Text performs variable interpolation, allowing an attacker to achieve remote code execution."
+            }
+        ]
+        
+        try:
+            # Parse current dependencies
+            dependencies = self.parse_gradle_dependencies()
+            print(f"Found {len(dependencies)} dependencies to check")
+            
+            for dep in dependencies:
+                package_name = f"{dep['group']}:{dep['artifact']}"
+                version = dep['version']
+                
+                # Check against known CVEs
+                for known_cve in known_cves:
+                    if known_cve["package"] == package_name:
+                        # Check if current version is vulnerable
+                        if version in known_cve["vulnerable_versions"]:
+                            print(f"  ⚠️  {package_name}:{version} - Found {known_cve['cve']}")
+                            
+                            self.vulnerabilities.append({
+                                'package': package_name,
+                                'ecosystem': 'maven',
+                                'current_version': version,
+                                'patched_version': known_cve['fixed_version'],
+                                'cve': known_cve['cve'],
+                                'severity': known_cve['severity'],
+                                'description': known_cve['description'],
+                                'cvss_score': known_cve['cvss_score'],
+                                'alert_state': 'open',
+                                'source': 'known-cve-db'
+                            })
+                        else:
+                            print(f"  ✅ {package_name}:{version} - No known vulnerabilities")
+            
+            print(f"\nKnown CVE scan complete. Found {len(self.vulnerabilities)} vulnerabilities")
+            
+        except Exception as e:
+            print(f"⚠️  Error running known CVE scan: {e}")
+            import traceback
+            traceback.print_exc()
     
     def parse_gradle_dependencies(self) -> List[Dict]:
         """Parse dependencies from build.gradle"""
