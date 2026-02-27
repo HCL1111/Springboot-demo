@@ -51,6 +51,9 @@ dependencies {
     // Apache Commons Text - Updated to fix CVE-2022-42889 (Arbitrary code execution)
     implementation 'org.apache.commons:commons-text:1.15.0'
     
+    // Apache Commons IO - VULNERABLE VERSION FOR TESTING CVE WORKFLOW (CVE-2024-47554)
+    implementation 'commons-io:commons-io:2.13.0'
+    
     // Spring Security for password hashing
     implementation 'org.springframework.security:spring-security-crypto:6.5.8'
     
