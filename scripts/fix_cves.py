@@ -87,8 +87,9 @@ class CVEScanner:
         print("Checking GitHub Dependabot alerts...")
         
         if not self.github_token or not self.repo_owner or not self.repo_name:
-            print("⚠️  GitHub credentials not available, using manual scanning...")
-            self.manual_cve_check()
+            print("⚠️  GitHub credentials not available.")
+            print("ERROR: Dependabot API access is required for vulnerability scanning.")
+            print("Please ensure GITHUB_TOKEN and GITHUB_REPOSITORY are set correctly.")
             return
         
         try:
@@ -99,107 +100,75 @@ class CVEScanner:
             }
             
             url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/dependabot/alerts"
-            response = requests.get(url, headers=headers, params={"state": "open"})
             
-            if response.status_code == 200:
-                alerts = response.json()
-                print(f"Found {len(alerts)} open Dependabot alerts")
+            # Get all alerts (not just open ones)
+            # This helps catch dismissed or auto-closed alerts that may still represent vulnerabilities
+            response_all = requests.get(url, headers=headers)
+            
+            if response_all.status_code == 200:
+                all_alerts = response_all.json()
+                print(f"Found {len(all_alerts)} total Dependabot alerts (all states)")
                 
-                for alert in alerts:
+                # Parse current dependencies to match against alerts
+                dependencies = self.parse_gradle_dependencies()
+                
+                # Filter for alerts that represent current vulnerabilities
+                # Include: open, dismissed (might be false dismissal), auto_dismissed
+                # Exclude: fixed (truly resolved)
+                for alert in all_alerts:
+                    state = alert.get("state", "")
+                    
+                    # Skip truly fixed alerts
+                    if state == "fixed":
+                        continue
+                    
                     vuln = alert.get("security_vulnerability", {})
                     package = vuln.get("package", {})
                     advisory = alert.get("security_advisory", {})
                     
-                    self.vulnerabilities.append({
-                        'package': package.get("name", "Unknown"),
-                        'ecosystem': package.get("ecosystem", "Unknown"),
-                        'current_version': vuln.get("vulnerable_version_range", "Unknown"),
-                        'patched_version': vuln.get("first_patched_version", {}).get("identifier", "Unknown"),
-                        'cve': advisory.get("cve_id", advisory.get("ghsa_id", "Unknown")),
-                        'severity': advisory.get("severity", "Unknown"),
-                        'description': advisory.get("description", ""),
-                        'cvss_score': advisory.get("cvss", {}).get("score", 0)
-                    })
+                    # Check if the current dependency version is still vulnerable
+                    # by comparing against our actual dependencies
+                    package_name = package.get("name", "Unknown")
+                    
+                    # Check if this package is in our current dependencies
+                    is_current = False
+                    for dep in dependencies:
+                        dep_name = f"{dep['group']}:{dep['artifact']}"
+                        if dep_name == package_name or dep['artifact'] == package_name.split(':')[-1]:
+                            is_current = True
+                            break
+                    
+                    # Only add if it's a current dependency OR if it's an open alert
+                    if is_current or state == "open":
+                        self.vulnerabilities.append({
+                            'package': package_name,
+                            'ecosystem': package.get("ecosystem", "Unknown"),
+                            'current_version': vuln.get("vulnerable_version_range", "Unknown"),
+                            'patched_version': vuln.get("first_patched_version", {}).get("identifier", "Unknown"),
+                            'cve': advisory.get("cve_id", advisory.get("ghsa_id", "Unknown")),
+                            'severity': advisory.get("severity", "Unknown"),
+                            'description': advisory.get("description", ""),
+                            'cvss_score': advisory.get("cvss", {}).get("score", 0),
+                            'alert_state': state
+                        })
+                
+                print(f"Identified {len(self.vulnerabilities)} vulnerabilities affecting current dependencies")
             else:
-                print(f"⚠️  Could not fetch Dependabot alerts (status {response.status_code})")
-                print("Falling back to manual scanning...")
-                self.manual_cve_check()
+                print(f"⚠️  Could not fetch Dependabot alerts (status {response_all.status_code})")
+                if response_all.status_code == 403:
+                    print("ERROR: Access forbidden. Please check that:")
+                    print("  1. GITHUB_TOKEN has 'security_events' read permission")
+                    print("  2. Dependabot alerts are enabled for this repository")
+                    print("  3. The token has access to the repository")
+                elif response_all.status_code == 404:
+                    print("ERROR: Repository not found or Dependabot is not enabled")
+                    print("Please enable Dependabot alerts in repository settings")
+                else:
+                    print(f"ERROR: Unexpected response from GitHub API")
                 
         except Exception as e:
             print(f"⚠️  Error fetching Dependabot alerts: {e}")
-            print("Falling back to manual scanning...")
-            self.manual_cve_check()
-    
-    def manual_cve_check(self):
-        """Manually check dependencies against known CVEs using Maven Central API"""
-        print("Performing manual CVE check of current dependencies...")
-        
-        # Parse build.gradle to extract dependencies
-        dependencies = self.parse_gradle_dependencies()
-        
-        print(f"Checking {len(dependencies)} dependencies against Maven Central...")
-        
-        for dep in dependencies:
-            # Check if dependency has known vulnerabilities
-            # Using a simple version check against known secure versions
-            group_artifact = f"{dep['group']}:{dep['artifact']}"
-            
-            # Check against known patterns of vulnerable dependencies
-            if self.check_if_vulnerable(dep):
-                latest_version = self.get_latest_safe_version(dep)
-                if latest_version and latest_version != dep['version']:
-                    self.vulnerabilities.append({
-                        'package': group_artifact,
-                        'ecosystem': 'maven',
-                        'current_version': dep['version'],
-                        'patched_version': latest_version,
-                        'cve': 'Unknown',
-                        'severity': 'Medium',
-                        'description': f'Outdated version of {group_artifact}',
-                        'cvss_score': 5.0
-                    })
-        
-        print(f"Manual scan complete. Found {len(self.vulnerabilities)} potential issues.")
-    
-    def check_if_vulnerable(self, dep: Dict) -> bool:
-        """Check if a dependency is known to be vulnerable"""
-        # Known vulnerable versions (simplified check)
-        vulnerable_patterns = {
-            'com.h2database:h2': ['2.1.', '2.2.', '2.3.'],
-            'org.apache.tomcat.embed:tomcat-embed-core': ['10.0.', '10.1.0', '10.1.1'],
-            'ch.qos.logback:logback': ['1.4.', '1.5.0', '1.5.1'],
-            'com.fasterxml.jackson.core:jackson-databind': ['2.0.', '2.1.', '2.2.', '2.15.', '2.16.', '2.17.', '2.18.', '2.19.', '2.20.'],
-        }
-        
-        group_artifact = f"{dep['group']}:{dep['artifact']}"
-        if group_artifact in vulnerable_patterns:
-            version = dep['version']
-            for pattern in vulnerable_patterns[group_artifact]:
-                if version.startswith(pattern):
-                    return True
-        
-        return False
-    
-    def get_latest_safe_version(self, dep: Dict) -> Optional[str]:
-        """Get the latest safe version of a dependency from Maven Central"""
-        try:
-            url = f"https://search.maven.org/solrsearch/select"
-            params = {
-                'q': f'g:"{dep["group"]}" AND a:"{dep["artifact"]}"',
-                'rows': 1,
-                'wt': 'json'
-            }
-            
-            response = requests.get(url, params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                docs = data.get('response', {}).get('docs', [])
-                if docs:
-                    return docs[0].get('latestVersion')
-        except Exception as e:
-            print(f"Warning: Could not check Maven Central for {dep['group']}:{dep['artifact']}: {e}")
-        
-        return None
+            print("ERROR: Cannot scan for vulnerabilities without Dependabot API access")
     
     def parse_gradle_dependencies(self) -> List[Dict]:
         """Parse dependencies from build.gradle"""
@@ -208,12 +177,31 @@ class CVEScanner:
         with open(self.build_gradle) as f:
             content = f.read()
         
+        # First, extract version variables from ext block
+        version_vars = {}
+        # Pattern 1: set('varName', 'version')
+        ext_pattern1 = r"set\(['\"](\w+)['\"],\s*['\"](.+?)['\"]\)"
+        for var_name, var_value in re.findall(ext_pattern1, content):
+            version_vars[var_name] = var_value
+        
+        # Pattern 2: varName = 'version' (in ext block or elsewhere)
+        ext_pattern2 = r"(\w+Version)\s*=\s*['\"](.+?)['\"]"
+        for var_name, var_value in re.findall(ext_pattern2, content):
+            version_vars[var_name] = var_value
+        
         # Extract dependency declarations
         dep_pattern = r"(implementation|testImplementation|runtimeOnly|compileOnly)\s+['\"](.+?):(.+?):(.+?)['\"]"
         matches = re.findall(dep_pattern, content)
         
         for match in matches:
             scope, group, artifact, version = match
+            
+            # Resolve version variables (e.g., $tomcatVersion or ${tomcatVersion})
+            if version.startswith('$'):
+                # Remove $ and optional {} brackets
+                var_name = version.lstrip('$').strip('{}')
+                version = version_vars.get(var_name, version)
+            
             dependencies.append({
                 'scope': scope,
                 'group': group,

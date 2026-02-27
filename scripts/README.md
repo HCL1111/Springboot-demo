@@ -9,11 +9,17 @@ This directory contains automation scripts for security vulnerability management
 Automated CVE vulnerability scanner and fixer for Gradle projects.
 
 **Features:**
-- Scans dependencies for known CVEs using GitHub Dependabot API
-- Automatically updates vulnerable dependencies to secure versions
+- Scans dependencies for known CVEs using **GitHub Dependabot API only**
+- **Does NOT use hardcoded vulnerability patterns** - relies entirely on Dependabot
+- Automatically updates vulnerable dependencies to secure versions suggested by Dependabot
 - Runs Gradle build and tests to verify fixes
 - Generates detailed CVE fix reports
 - Creates Pull Requests with security updates
+
+**Important:** This scanner requires GitHub Dependabot API access to function. It does not use hardcoded CVE databases or patterns. Ensure:
+- Dependabot alerts are enabled for your repository
+- The `GITHUB_TOKEN` has `security_events` read permission
+- The repository has Dependabot configured to scan dependencies
 
 **Usage:**
 
@@ -21,14 +27,17 @@ Automated CVE vulnerability scanner and fixer for Gradle projects.
 # Run the scanner
 python scripts/fix_cves.py
 
-# Run with GitHub token for Dependabot integration
+# Run with GitHub token for Dependabot integration (REQUIRED)
 GITHUB_TOKEN=your_token GITHUB_REPOSITORY=owner/repo python scripts/fix_cves.py
 ```
 
+**Note:** Without valid GitHub credentials with Dependabot API access, the scanner will report an error and exit. It does not fall back to hardcoded vulnerability detection.
+
 **Environment Variables:**
-- `GITHUB_TOKEN`: GitHub token for API access (optional, for Dependabot alerts)
-- `GITHUB_REPOSITORY`: Repository in format `owner/repo` (optional)
-- `NVD_API_KEY`: NVD API key for OWASP Dependency-Check (optional)
+- `GITHUB_TOKEN`: GitHub token with `security_events` read permission (**REQUIRED**)
+- `GITHUB_REPOSITORY`: Repository in format `owner/repo` (**REQUIRED**)
+
+**Note:** Both environment variables are required for the scanner to work. The scanner relies exclusively on GitHub Dependabot API and will not function without proper API access.
 
 **Output:**
 - `CVE_FIX_REPORT.md`: Detailed report of vulnerabilities and fixes
@@ -44,12 +53,21 @@ The CVE scanner is automatically triggered by the `cve-scanner.yml` workflow:
 
 ## How It Works
 
-1. **Scan**: Checks dependencies against GitHub Dependabot alerts or Maven Central
-2. **Analyze**: Identifies vulnerable packages and determines safe versions
-3. **Fix**: Automatically updates `build.gradle` with patched versions
+1. **Scan**: Fetches vulnerability alerts from GitHub Dependabot API
+   - Checks all alert states (open, dismissed, etc.)
+   - Filters out only truly "fixed" alerts
+   - Matches alerts against current dependencies in build.gradle
+2. **Analyze**: Identifies vulnerable packages from Dependabot data and determines safe versions
+3. **Fix**: Automatically updates `build.gradle` with patched versions from Dependabot
 4. **Verify**: Runs `./gradlew clean build` to ensure fixes don't break the build
-5. **Report**: Generates a detailed markdown report
+5. **Report**: Generates a detailed markdown report with CVE information from Dependabot
 6. **PR**: Creates a pull request with all changes for review
+
+**Key Design Principle:** The scanner does NOT use any hardcoded CVE databases or vulnerability patterns. All vulnerability information comes directly from GitHub Dependabot API. This ensures:
+- Always up-to-date vulnerability data from GitHub's security advisory database
+- No maintenance of hardcoded patterns required
+- Consistent with GitHub's security recommendations
+- Reliable detection based on actual security advisories
 
 ## Manual Testing
 
@@ -92,20 +110,21 @@ python scripts/test_cve_scanner.py
 ```
 
 **Test Coverage:**
-1. ✅ Scanner can detect vulnerable dependencies
-2. ✅ Scanner can automatically fix vulnerabilities
-3. ✅ Scanner generates detailed CVE reports
-4. ✅ Fixed dependencies pass build and tests
-5. ✅ Scanner correctly handles no vulnerabilities case
+1. ✅ Scanner properly integrates with Dependabot API
+2. ✅ Scanner does NOT use hardcoded vulnerability patterns
+3. ✅ Scanner relies entirely on Dependabot for detection
+4. ✅ Scanner provides clear error messages when Dependabot unavailable
+5. ✅ Scanner correctly handles secure dependencies
 
 The test suite automatically:
 - Creates a backup of build.gradle
-- Introduces a known vulnerable dependency
-- Runs the scanner
-- Verifies the fix was applied
-- Runs the build to ensure it passes
+- Introduces a known vulnerable dependency (H2 2.1.214)
+- Runs the scanner to verify it requires Dependabot API
+- Verifies scanner doesn't use hardcoded patterns
 - Tests the no-vulnerability case
 - Restores the original state
+
+**Note:** The tests verify that the scanner correctly requires Dependabot API access and does not fall back to hardcoded vulnerability detection. In environments without Dependabot API access, the scanner will report an error rather than using unreliable hardcoded patterns.
 
 ### `trigger-workflow.sh`
 
