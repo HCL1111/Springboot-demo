@@ -42,8 +42,8 @@ dependencies {
     runtimeOnly 'com.h2database:h2:2.4.240'
     
     // Log4j - Already updated by Dependabot
-    implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
-    implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+    implementation 'org.apache.logging.log4j:log4j-api:2.25.4'
     
     // Jackson Databind - Already updated by Dependabot
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
