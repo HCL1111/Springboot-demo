@@ -24,6 +24,36 @@ ext {
 
 
 dependencies {
+    // Add explicit version to override transitive dependency and fix jackson-databind vulnerability
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.11'
+
+    // Add explicit version to override transitive dependency and fix log4j-core vulnerability
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+
+    // Add explicit version to override transitive dependency and fix log4j-core vulnerability
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+
+    // Add explicit version to override transitive dependency and fix log4j-core vulnerability
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+
+    // Add explicit version to override transitive dependency and fix logback-core vulnerability
+    implementation 'ch.qos.logback:logback-core:1.5.33'
+
+    // Add explicit version to override transitive dependency and fix tomcat-embed-core vulnerability
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.117'
+
+    // Add explicit version to override transitive dependency and fix tomcat-embed-core vulnerability
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.117'
+
+    // Add explicit version to override transitive dependency and fix tomcat-embed-core vulnerability
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.117'
+
+    // Add explicit version to override transitive dependency and fix tomcat-embed-core vulnerability
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.117'
+
+    // Add explicit version to override transitive dependency and fix tomcat-embed-core vulnerability
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.117'
+
     // Spring Boot Starter Web
     implementation 'org.springframework.boot:spring-boot-starter-web'
     
@@ -42,11 +72,11 @@ dependencies {
     runtimeOnly 'com.h2database:h2:2.4.240'
     
     // Log4j - Already updated by Dependabot
-    implementation 'org.apache.logging.log4j:log4j-core:2.25.3'
-    implementation 'org.apache.logging.log4j:log4j-api:2.25.3'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+    implementation 'org.apache.logging.log4j:log4j-api:2.25.5'
     
     // Jackson Databind - Already updated by Dependabot
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.11'
     
     // Apache Commons Text - Updated to fix CVE-2022-42889 (Arbitrary code execution)
     implementation 'org.apache.commons:commons-text:1.15.0'
